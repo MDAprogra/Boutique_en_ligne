@@ -171,4 +171,28 @@ Ajouter les articles au panier, quantité limitée par le stock, acheter. Influe
 | `views/OrdersView.vue` | Page `/orders` : liste des commandes avec statuts colorés, détail des articles |
 | `router/index.ts` | Route `/orders` ajoutée |
 
+---
+
+## Statistiques (admin)
+
+### Backend — `routes/stats.ts` (admin-only via `requireAdmin`)
+
+- KPIs : total commandes, chiffre d'affaires, nombre de clients
+- Répartition des commandes par statut
+- Top 5 produits les plus vendus
+- Revenus quotidiens sur les 30 derniers jours
+
+### Frontend — `views/StatsView.vue`
+
+Tailwind CSS :
+
+- 3 cartes KPI en haut
+- Barres horizontales colorées par statut de commande
+- Barres horizontales pour le top 5 produits
+- Histogramme vertical des revenus avec tooltip au survol
+
+Le lien « Statistiques » s'affiche dans la NavBar uniquement pour les admins. Un non-admin qui accède à `/stats` est redirigé vers l'accueil.
+
+---
+
 *Cette partie a été mise en forme par intelligence artificielle.*
