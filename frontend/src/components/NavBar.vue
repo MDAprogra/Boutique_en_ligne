@@ -9,8 +9,10 @@
         <Button variant="ghost" size="sm" as-child>
           <RouterLink :to="{ name: 'contact' }">Contact</RouterLink>
         </Button>
-
-        <!-- Utilisateur connecté -->
+        <Button v-if="isAuthenticated" variant="ghost" size="sm" as-child>
+          <RouterLink :to="{ name: 'orders' }">Mes commandes</RouterLink>
+        </Button>
+        <CartDrawer />
         <template v-if="isAuthenticated && user">
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
@@ -34,8 +36,6 @@
             </DropdownMenuContent>
           </DropdownMenu>
         </template>
-
-        <!-- Utilisateur non connecté -->
         <Button v-else size="sm" as-child>
           <RouterLink :to="{ name: 'auth' }">Se connecter</RouterLink>
         </Button>
@@ -58,10 +58,10 @@
     DropdownMenuSeparator,
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu'
+  import CartDrawer from '@/components/CartDrawer.vue'
 
   const { user, isAuthenticated, logout } = useAuth()
   const router = useRouter()
-
   const initials = computed(() => {
     if (!user.value) return ''
     return `${user.value.firstName[0]}${user.value.lastName[0]}`.toUpperCase()
@@ -72,3 +72,4 @@
     router.push({ name: 'home' })
   }
 </script>
+

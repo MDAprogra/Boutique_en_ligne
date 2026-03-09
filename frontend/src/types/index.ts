@@ -30,3 +30,29 @@ export interface AuthResponse {
   token: string
   user: User
 }
+
+
+export interface CartItem {
+  product: Product
+  quantity: number
+}
+export interface OrderItem {
+  id: number
+  productId: number
+  quantity: number
+  unitPrice: number
+  product: {
+    id: number
+    name: string
+    category: { name: string }
+  }
+}
+
+export interface Order {
+  id: number
+  status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
+  total: number
+  createdAt: string
+  orderItems: OrderItem[]
+}
+

@@ -23,7 +23,14 @@ const router = createRouter({
       name: 'contact',
       component: () => import('../views/ContactView.vue'),
     },
+    {
+      // Page de suivi des commandes de l'utilisateur connecté
+      path: '/orders',
+      name: 'orders',
+      component: () => import('../views/OrdersView.vue'),
+    },
   ],
 })
 
 export default router
+
