@@ -29,6 +29,12 @@ const router = createRouter({
       name: 'orders',
       component: () => import('../views/OrdersView.vue'),
     },
+    {
+      // Page statistiques réservée aux administrateurs
+      path: '/stats',
+      name: 'stats',
+      component: () => import('../views/StatsView.vue'),
+    },
   ],
 })
 

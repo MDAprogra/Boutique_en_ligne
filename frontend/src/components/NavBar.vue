@@ -12,6 +12,10 @@
         <Button v-if="isAuthenticated" variant="ghost" size="sm" as-child>
           <RouterLink :to="{ name: 'orders' }">Mes commandes</RouterLink>
         </Button>
+        <!-- Lien vers le tableau de bord statistiques (admin uniquement) -->
+        <Button v-if="isAdmin" variant="ghost" size="sm" as-child>
+          <RouterLink :to="{ name: 'stats' }">Statistiques</RouterLink>
+        </Button>
         <CartDrawer />
         <template v-if="isAuthenticated && user">
           <DropdownMenu>
@@ -60,7 +64,7 @@
   } from '@/components/ui/dropdown-menu'
   import CartDrawer from '@/components/CartDrawer.vue'
 
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, isAdmin, logout } = useAuth()
   const router = useRouter()
   const initials = computed(() => {
     if (!user.value) return ''
