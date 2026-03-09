@@ -16,7 +16,7 @@
         <Button v-if="isAdmin" variant="ghost" size="sm" as-child>
           <RouterLink :to="{ name: 'stats' }">Statistiques</RouterLink>
         </Button>
-        <CartDrawer />
+        <CartDrawer v-if="isAuthenticated"  />
         <template v-if="isAuthenticated && user">
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
