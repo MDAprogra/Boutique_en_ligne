@@ -1,25 +1,51 @@
 <template>
   <div class="container mx-auto px-4 py-10">
-    <div class="mb-8 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <Button variant="ghost" size="sm" as-child>
-          <RouterLink :to="{ name: 'home' }">← Retour</RouterLink>
-        </Button>
-        <h1 class="text-3xl font-bold tracking-tight">Nos produits</h1>
+    <div class="mb-8 flex flex-col gap-4">
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <Button variant="ghost" size="sm" as-child>
+            <RouterLink :to="{ name: 'home' }">← Retour</RouterLink>
+          </Button>
+          <h1 class="text-3xl font-bold tracking-tight">Nos produits</h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <Select v-model="sort" @update:model-value="onSortChange">
+            <SelectTrigger class="w-52">
+              <SelectValue placeholder="Trier par..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="price_asc">Prix croissant</SelectItem>
+              <SelectItem value="price_desc">Prix décroissant</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button v-if="isAdmin" @click="openCreate">Ajouter un produit</Button>
+        </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <Select v-model="sort" @update:model-value="onSortChange">
-          <SelectTrigger class="w-52">
-            <SelectValue placeholder="Trier par..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="price_asc">Prix croissant</SelectItem>
-            <SelectItem value="price_desc">Prix décroissant</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button v-if="isAdmin" @click="openCreate">Ajouter un produit</Button>
+      <!-- Barre de recherche -->
+      <div class="relative max-w-md">
+        <svg
+          class="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <Input
+          id="search-products"
+          v-model="search"
+          class="pl-9"
+          placeholder="Rechercher un produit..."
+          @input="onSearchInput"
+        />
       </div>
     </div>
 
@@ -201,15 +227,20 @@
   const totalPages = computed(() => Math.ceil(totalItems.value / PAGE_SIZE))
   const currentPage = ref(Number(route.query.page) || 1)
   const sort = ref<string>((route.query.sort as string) || '')
+    // ++ search : texte entré par l'utilisateur dans la barre de recherche
+  const search = ref<string>((route.query.search as string) || '')
   const loading = ref(false)
   const error = ref(false)
 
-  async function fetchProducts(page: number, sortValue: string) {
+  // + fetchProducts : ajout du paramètre searchValue pour la recherche
+  async function fetchProducts(page: number, sortValue: string, searchValue: string) {
     loading.value = true
     error.value = false
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
       if (sortValue) params.set('sort', sortValue)
+      // ++ search : vérifie si searchValue n'est pas vide avant de l'ajouter aux paramètres
+      if (searchValue) params.set('search', searchValue)
       const res = await fetch(`/api/products?${params}`)
       if (!res.ok) throw new Error()
       const json: ProductsResponse = await res.json()
@@ -222,22 +253,46 @@
     }
   }
 
+  // ++ buildQuery : construit l'objet de requête à partir des paramètres actuels
+  function buildQuery(): Record<string, string> {
+    const q: Record<string, string> = {}
+    if (currentPage.value > 1) q.page = String(currentPage.value)
+    if (sort.value) q.sort = sort.value
+    if (search.value) q.search = search.value
+    return q
+  }
+
   function onPageChange(page: number) {
     currentPage.value = page
-    const query: Record<string, string> = { page: String(page) }
-    if (sort.value) query.sort = sort.value
-    router.push({ query })
+
+    // ++ buildQuery : construit l'objet de requête à partir des paramètres actuels
+    router.push({ query: buildQuery() })
   }
 
   function onSortChange(value: string) {
     currentPage.value = 1
-    const query: Record<string, string> = {}
-    if (value) query.sort = value
-    router.push({ query })
+    const q: Record<string, string> = {}
+
+    if (value) q.sort = value
+    if (search.value) q.search = search.value
+    router.push({ query: q })
   }
 
-  watch([currentPage, sort], ([page, sortValue]) => fetchProducts(page, sortValue))
-  onMounted(() => fetchProducts(currentPage.value, sort.value))
+  // ++ onSearchInput : gère la recherche avec un délai d'attente pour éviter les appels API trop fréquents
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
+  function onSearchInput() {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+      currentPage.value = 1
+      router.push({ query: buildQuery() })
+    }, 400)
+  }
+
+  // + watch : surveille les changements de currentPage, sort et search et appelle fetchProducts
+  watch([currentPage, sort, search], ([page, sortValue, searchValue]) =>
+    fetchProducts(page, sortValue, searchValue),
+  )
+  onMounted(() => fetchProducts(currentPage.value, sort.value, search.value))
 
   // --- Formulaire ajout / modification ---
   const formDialogOpen = ref(false)
@@ -297,7 +352,7 @@
         throw new Error(message)
       }
       formDialogOpen.value = false
-      await fetchProducts(currentPage.value, sort.value)
+      await fetchProducts(currentPage.value, sort.value, search.value)
     } catch (e) {
       formError.value = e instanceof Error ? e.message : 'Une erreur est survenue.'
     } finally {
@@ -331,7 +386,7 @@
         throw new Error(message)
       }
       deleteDialogOpen.value = false
-      await fetchProducts(currentPage.value, sort.value)
+      await fetchProducts(currentPage.value, sort.value, search.value)
     } catch (e) {
       deleteError.value = e instanceof Error ? e.message : 'Une erreur est survenue.'
     } finally {

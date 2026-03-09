@@ -18,14 +18,26 @@ router.get('/', async (req: Request, res: Response) => {
         ? { price: 'desc' as const }
         : { createdAt: 'desc' as const }
 
+  // + search : recherche de produits par nom ou description (informations visibles par l'utilisateur)
+  const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
+  const where = search
+    ? {
+      OR: [
+        { name: { contains: search, mode: 'insensitive' as const } },
+        { description: { contains: search, mode: 'insensitive' as const } },
+      ],
+    }
+    : {}
+
   const [data, total] = await prisma.$transaction([
     prisma.product.findMany({
+      where,
       skip,
       take: limit,
       orderBy,
       include: { category: { select: { name: true } } },
     }),
-    prisma.product.count(),
+    prisma.product.count({ where }),
   ])
 
   res.json({
