@@ -125,3 +125,50 @@ Pour ouvrir Prisma Studio (interface graphique) :
 ```bash
 npx prisma studio --schema=backend/prisma/schema.prisma
 ```
+
+# Fonctionnalités à ajouter
+
+---
+
+## Barre de recherche dans le listing
+
+### Backend — `products.ts`
+
+- Nouveau paramètre `?search=` lu depuis la query string
+- Filtre Prisma `OR` sur nom et description (insensible à la casse via `mode: 'insensitive'`)
+- Le `count({ where })` est aussi filtré → la pagination reste correcte
+
+### Frontend — `ProductsView.vue`
+
+- Champ de recherche avec icône loupe, positionné sous la barre titre/filtres
+- Latence de **400 ms** — l'API n'est appelée qu'après que l'utilisateur ait arrêté d'écrire
+- La valeur `search` est synchronisée avec les query params de l'URL
+- Compatibilité complète avec le tri et la pagination
+
+---
+
+## Fonction panier
+
+Ajouter les articles au panier, quantité limitée par le stock, acheter. Influence le stock du produit. Les commandes doivent être visibles dans la page de suivi des utilisateurs.
+
+### Backend
+
+| Fichier | Rôle |
+|---|---|
+| `routes/orders.ts` | `POST /api/orders` — checkout : vérifie le stock, crée la commande, décrémente le stock |
+| `routes/orders.ts` | `GET /api/orders/me` — historique des commandes |
+| `index.ts` | Enregistrement du router `orders` |
+
+### Frontend
+
+| Fichier | Rôle |
+|---|---|
+| `types/index.ts` | Types `CartItem`, `OrderItem`, `Order` |
+| `composables/useCart.ts` | État global du panier — `addToCart`, `updateQty`, `removeFromCart`, `clearCart`, `checkout` |
+| `components/ProductCard.vue` | Bouton « Ajouter au panier » (désactivé si rupture ou max atteint) avec compteur de stock |
+| `components/CartDrawer.vue` | Liste des articles, boutons +/−, total, bouton Commander (redirige vers `/auth` si non connecté) |
+| `components/NavBar.vue` | Icône panier avec badge, accès à « Mes commandes » |
+| `views/OrdersView.vue` | Page `/orders` : liste des commandes avec statuts colorés, détail des articles |
+| `router/index.ts` | Route `/orders` ajoutée |
+
+*Cette partie a été mise en forme par intelligence artificielle.*
